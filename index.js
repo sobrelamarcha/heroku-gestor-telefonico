@@ -8,6 +8,8 @@ app.use(bp.json());
 app.use(bp.urlencoded({ extended: true }));
 app.use(cors());
 
+app.use(express.static("build"));
+
 morgan.token("body", (request, response) => JSON.stringify(request.body));
 app.use(
   morgan(

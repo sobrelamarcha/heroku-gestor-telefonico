@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:ui": "rm -rf build && cd /D/xampp/htdocs/proyectos/full-stack-bootcamp-free/part2/ej2/ && npm run build --prod && cp -r build /D/xampp/htdocs/proyectos/heroku/ej1/build"
   },
   "keywords": [],
   "author": "",
