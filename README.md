@@ -20,8 +20,6 @@ Para ver la quota usada (para saber el nombre de la app, METODO 1: hacer un git 
 
     heroku ps -a [nombre de la app]
 
-## Notas
-
 En windows si da error al ejecutar npm run build:ui es porque por defecto npm usa el cmd de windows y no entiende los comandos bash. Para solucionarlo:
 
     npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"
