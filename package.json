@@ -6,11 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build:ui": "rm -rf build && cd /D/xampp/htdocs/proyectos/full-stack-bootcamp-free/part2/ej2/ && npm run build --prod && cp -r build /D/xampp/htdocs/proyectos/heroku/ej1/build",
-    "deploy": "git push heroku HEAD:master",
-    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && npm run deploy",
-    "logs:prod": "heroku logs --tail"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +17,10 @@
   "dependencies": {
     "body-parser": "^1.20.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
     "express": "^4.18.1",
+    "mongoose": "^6.4.3",
+    "mongoose-unique-validator": "^3.1.0",
     "morgan": "^1.10.0"
   }
 }
