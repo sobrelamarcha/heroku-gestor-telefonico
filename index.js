@@ -1,8 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const bp = require("body-parser");
 const morgan = require("morgan");
 const cors = require("cors");
+const Person = require("./models/person");
+const { response } = require("express");
+const notFound = require("./middleware/notFound.js");
+const handleErrors = require("./middleware/handleErrors.js");
 
 app.use(bp.json());
 app.use(bp.urlencoded({ extended: true }));
@@ -17,63 +22,50 @@ app.use(
   )
 );
 
-let persons = [
-  {
-    name: "Arto Hellas",
-    phone: "040-123456",
-    id: 1,
-  },
-  {
-    name: "Ada Lovelace",
-    phone: "39-44-5323523",
-    id: 3,
-  },
-  {
-    name: "test",
-    phone: "1111111",
-    id: 4,
-  },
-  {
-    name: "test2",
-    phone: "33333",
-    id: 5,
-  },
-];
-
 app.get("/", (request, response) => {
   response.send("<h1>Hello World</h1>");
 });
 
 app.get("/info", (request, response) => {
-  const totalPersons = persons.length;
   const fechaHoy = new Date();
-  response.send(
-    `Phonebook has info for ${totalPersons} people <br>${fechaHoy}`
-  );
+  Person.find({}).then((persons) => {
+    totalPersons = persons.length;
+    response.send(
+      `Phonebook has info for ${totalPersons} people <br>${fechaHoy}`
+    );
+  });
 });
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
-});
-
-app.get("/api/persons/:id", (request, response) => {
-  const idPerson = Number(request.params.id);
-  const person = persons.find((p) => p.id === idPerson);
-
-  if (person) {
-    response.json(person);
-  } else {
-    response.status(404).end();
-  }
-});
-
-app.delete("/api/persons/:id", (request, response) => {
-  const idPerson = Number(request.params.id);
-  persons = persons.filter((p) => {
-    return idPerson !== p.id;
+  Person.find({}).then((persons) => {
+    response.json(persons);
   });
-  response.status(204).end();
-  // response.json({ success: `person with id ${idPerson} deleted successfully` });
+});
+
+app.get("/api/persons/:id", (request, response, next) => {
+  const { id } = request.params;
+  console.log(`searching person with id: ${id}`);
+  Person.findById(id)
+    .then((result) => {
+      if (result) {
+        response.json(result);
+      } else {
+        next(error);
+      }
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
+app.delete("/api/persons/:id", (request, response, next) => {
+  const { id } = request.params;
+
+  Person.findByIdAndRemove(id)
+    .then((result) => {
+      response.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
 const maxId = (array) => {
@@ -82,7 +74,23 @@ const maxId = (array) => {
   return max;
 };
 
-app.post("/api/persons", (request, response) => {
+app.put("/api/persons/:id", (request, response, next) => {
+  const { id } = request.params;
+  const person = request.body;
+
+  const newPerson = {
+    name: person.name,
+    phone: person.phone,
+  };
+
+  Person.findByIdAndUpdate(id, newPerson, { new: true })
+    .then((result) => {
+      return response.json(result);
+    })
+    .catch((error) => next(error));
+});
+
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
 
   if (!body) {
@@ -94,34 +102,24 @@ app.post("/api/persons", (request, response) => {
   if (!body.phone) {
     return response.status(400).json({ error: "phone content missing" });
   }
-  // comprobar si ya existe el nombre
-  if (
-    persons.find((p) => {
-      return p.name === body.name;
-    })
-  ) {
-    return response
-      .status(400)
-      .json({ error: "the name already exists in phonebook" });
-  }
 
-  const person = {
+  const person = new Person({
     name: body.name,
     phone: body.phone,
-    id: maxId(persons) + 1,
-  };
+  });
 
-  persons = persons.concat(person);
-
-  response.json(person);
+  person
+    .save()
+    .then((savedPerson) => savedPerson.toJSON())
+    .then((savedAndFormattedPerson) => {
+      response.json(savedAndFormattedPerson);
+    })
+    .catch((error) => next(error));
 });
 
-//el siguiente middleware se coloca después de todas las rutas para que se ejecute si no ha entrado en ninguna de las anteriores
-const unknownEndpoint = (request, response) => {
-  response.status(404).send({ error: "unknown endpoint" });
-};
+app.use(notFound);
 
-app.use(unknownEndpoint);
+app.use(handleErrors);
 
 const PORT = process.env.PORT || 3001;
 
